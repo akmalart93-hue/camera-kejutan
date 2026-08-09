@@ -1,0 +1,46 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f9a8d4"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Border luar (bingkai polaroid) -->
+  <rect x="0" y="0" width="1000" height="1000" fill="none" stroke="url(#borderGrad)" stroke-width="70"/>
+
+  <!-- Garis putih tipis di dalam border -->
+  <rect x="52" y="52" width="896" height="896" fill="none" stroke="white" stroke-width="6"/>
+
+  <!-- Caption bar bawah ala polaroid -->
+  <rect x="35" y="860" width="930" height="105" rx="16" fill="rgba(255,255,255,0.92)"/>
+  <text x="500" y="925" font-family="Poppins, sans-serif" font-size="46" font-weight="700"
+        fill="#db2777" text-anchor="middle">Happy Birthday! 🎂</text>
+
+  <!-- Dekorasi bintang & confetti di pojok -->
+  <g fill="#fde047">
+    <circle cx="90" cy="90" r="10"/>
+    <circle cx="910" cy="90" r="8"/>
+    <circle cx="130" cy="60" r="6"/>
+  </g>
+  <g fill="#f472b6">
+    <circle cx="60" cy="130" r="7"/>
+    <circle cx="940" cy="140" r="9"/>
+  </g>
+  <g fill="#a78bfa">
+    <circle cx="880" cy="65" r="6"/>
+    <circle cx="70" cy="70" r="5"/>
+  </g>
+
+  <!-- Balon kecil pojok kiri atas -->
+  <g transform="translate(70,150) rotate(-10)">
+    <ellipse cx="0" cy="0" rx="26" ry="34" fill="#fb7185"/>
+    <line x1="0" y1="34" x2="0" y2="70" stroke="#fb7185" stroke-width="3"/>
+  </g>
+
+  <!-- Balon kecil pojok kanan atas -->
+  <g transform="translate(930,160) rotate(12)">
+    <ellipse cx="0" cy="0" rx="24" ry="32" fill="#818cf8"/>
+    <line x1="0" y1="32" x2="0" y2="65" stroke="#818cf8" stroke-width="3"/>
+  </g>
+</svg>
