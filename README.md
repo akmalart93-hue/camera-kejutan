@@ -235,11 +235,65 @@ Lalu di GitHub: **Settings** → **Pages** → **Source**, pilih branch
 1. Buka `https://<username>.github.io/<repo>/#/admin/login`, login.
 2. Di Dashboard, isi **nama** yang berulang tahun + **pesan** ucapan → **Buat Link**.
 3. Klik **Salin Link** di daftar link, lalu kirim link tersebut (WA, dsb).
-4. Saat dibuka, penerima akan diminta akses kamera, ambil foto photobox,
-   lalu melihat ucapanmu lengkap dengan confetti. 🎉
+4. Saat dibuka, penerima akan melalui alur: sapaan → **pilih frame** dari
+   galeri (3 kategori: Aesthetic, Retro, Cute Shapes) → **jepret foto**
+   beberapa kali sesuai jumlah slot frame (bisa ambil ulang kalau kurang
+   pas) → lihat hasil gabungan & download → **gosok scratch card** untuk
+   membuka ucapanmu, lengkap dengan confetti. 🎉
 
 Setiap link punya ID unik (slug), jadi kamu bisa membuat link baru untuk
 setiap orang tanpa perlu mengubah kode sama sekali.
+
+---
+
+## 9a. Cara Menambah Frame Baru (Tanpa Bikin Gambar!)
+
+Semua frame photobox **digambar langsung lewat kode** (Canvas), bukan pakai
+file gambar siap pakai. Jadi menambah desain baru tidak perlu buka
+Photoshop/Figma — cukup edit satu file data: **`src/data/frames.js`**.
+
+### Langkah singkat:
+1. Buka `src/data/frames.js`.
+2. Duplikat salah satu objek frame yang paling mirip dengan yang kamu mau.
+3. Ganti bagian-bagian ini:
+   - `id` — harus unik, tidak boleh sama dengan frame lain.
+   - `name` — nama yang tampil di galeri.
+   - `category` — salah satu dari: `'aesthetic'`, `'retro'`, `'cute'` (atau
+     tambah kategori baru sendiri di `FRAME_CATEGORIES`).
+   - `shotCount` — otomatis mengikuti jumlah item di `slots`.
+   - `slots` — daftar posisi & bentuk tiap foto. Tiap slot punya:
+     - `x, y, w, h` — posisi & ukuran (dalam satuan piksel kanvas)
+     - `shape` — salah satu dari: `'rect'`, `'rounded'`, `'circle'`, `'bear'`, `'cat'`, `'heart'`
+     - `rotation` — opsional, memutar slot (contoh: efek foto polaroid berserakan)
+4. Simpan file. Frame baru **otomatis muncul** di galeri publik — tidak
+   perlu ubah kode di tempat lain.
+
+### Contoh menambah frame baru super sederhana:
+```js
+{
+  id: 'aesthetic-simple-strip',
+  category: 'aesthetic',
+  name: 'Simple Strip',
+  shotCount: 2,
+  canvas: { width: 800, height: 900 },
+  background: { type: 'solid', color: '#ffffff' },
+  slots: [
+    { x: 100, y: 60, w: 600, h: 350, shape: 'rounded', radius: 20 },
+    { x: 100, y: 440, w: 600, h: 350, shape: 'rounded', radius: 20 },
+  ],
+  caption: { text: 'simple & sweet', y: 860, color: '#333333' },
+}
+```
+
+### Menambah dekorasi (opsional):
+Tersedia tipe: `dot`, `star`, `heart`, `tape`, `leaf`, `paw`, `stripe`,
+`sprocket-column`. Lihat contoh pemakaiannya di frame-frame yang sudah ada
+untuk parameter yang dibutuhkan tiap tipe (posisi, ukuran, warna).
+
+> 💡 Kalau mau bentuk slot yang benar-benar baru (bukan salah satu dari 6
+> bentuk yang ada), itu perlu tambahan kode di `src/utils/frameRenderer.js`
+> bagian `SHAPE_BUILDERS`. Untuk sekadar mengombinasikan bentuk & posisi
+> yang sudah ada, cukup edit `frames.js` saja.
 
 ---
 
