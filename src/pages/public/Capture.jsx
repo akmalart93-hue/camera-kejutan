@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PhotoContext } from '../../App'
 import { useCamera } from '../../hooks/useCamera'
 import { captureVideoFrame } from '../../utils/camera'
+import { CAMERA_FILTERS, DEFAULT_FILTER_ID } from '../../data/cameraFilters'
 
 export default function Capture() {
   const { slug } = useParams()
@@ -13,6 +14,9 @@ export default function Capture() {
   const [shots, setShots] = useState([])
   const [pendingShot, setPendingShot] = useState(null)
   const [flash, setFlash] = useState(false)
+  const [filterId, setFilterId] = useState(DEFAULT_FILTER_ID)
+
+  const activeFilter = CAMERA_FILTERS.find((f) => f.id === filterId) || CAMERA_FILTERS[0]
 
   // Kalau belum ada frame terpilih (misal user refresh di halaman ini),
   // balikkan ke galeri pilih frame dulu.
@@ -31,7 +35,9 @@ export default function Capture() {
     if (!videoRef.current) return
     setFlash(true)
     setTimeout(() => setFlash(false), 300)
-    const dataUrl = captureVideoFrame(videoRef.current, true)
+    // Filter yang lagi dipilih ikut "dibakar" ke foto hasil, bukan cuma
+    // tampilan preview — jadi hasil download nanti konsisten sama yg dilihat
+    const dataUrl = captureVideoFrame(videoRef.current, true, activeFilter.css)
     setPendingShot(dataUrl)
   }
 
@@ -76,6 +82,7 @@ export default function Capture() {
           autoPlay
           playsInline
           muted
+          style={{ filter: !pendingShot ? activeFilter.css : 'none' }}
           className={`mirror absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
             cameraState === 'active' && !pendingShot ? 'opacity-100' : 'opacity-0'
           }`}
@@ -127,6 +134,28 @@ export default function Capture() {
           </div>
         )}
       </div>
+
+      {/* Pemilih filter — hanya tampil saat kamera aktif & belum ada pending shot */}
+      {cameraState === 'active' && !pendingShot && (
+        <div className="w-full max-w-sm mt-4">
+          <div className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1">
+            {CAMERA_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterId(f.id)}
+                className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-2xl text-xs font-medium transition ${
+                  filterId === f.id
+                    ? 'bg-pink-500 text-white shadow'
+                    : 'bg-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                <span className="text-lg leading-none">{f.emoji}</span>
+                {f.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Thumbnail foto yang sudah dikonfirmasi */}
       {shots.length > 0 && (
