@@ -6,7 +6,7 @@ import { renderFrameComposite } from '../../utils/frameRenderer'
 export default function Result() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const { selectedFrame, capturedPhotos } = useContext(PhotoContext)
+  const { selectedFrame, capturedPhotos, setFinalPhoto } = useContext(PhotoContext)
 
   const [mergedImage, setMergedImage] = useState(null)
   const [processing, setProcessing] = useState(true)
@@ -21,6 +21,7 @@ export default function Result() {
     renderFrameComposite(selectedFrame, capturedPhotos)
       .then((result) => {
         setMergedImage(result)
+        setFinalPhoto(result) // simpan juga ke context biar bisa ditampilkan lagi di halaman ucapan
         setProcessing(false)
       })
       .catch((err) => {
@@ -28,7 +29,7 @@ export default function Result() {
         setMergeError(true)
         setProcessing(false)
       })
-  }, [selectedFrame, capturedPhotos, slug, navigate])
+  }, [selectedFrame, capturedPhotos, slug, navigate, setFinalPhoto])
 
   const handleDownload = () => {
     if (!mergedImage) return

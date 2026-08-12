@@ -10,8 +10,18 @@ create table if not exists birthday_links (
   name text not null,                 -- Nama yang berulang tahun
   message text not null,              -- Isi ucapan
   frame_url text,                     -- (opsional) frame custom, kosongkan = pakai default
+  reveal_style text default 'scratch', -- Gaya buka ucapan: 'scratch' | 'tap-balloons' | 'simple'
   created_at timestamptz default now()
 );
+
+-- ============================================================
+-- UPGRADE dari versi sebelumnya? Kalau tabel birthday_links SUDAH ada
+-- (dibuat sebelum kolom reveal_style ini ditambahkan), jalankan baris
+-- ini SENDIRIAN di SQL Editor (baris create table di atas akan di-skip
+-- otomatis karena "if not exists", jadi kolom baru tidak ikut ditambah):
+--
+--   alter table birthday_links add column if not exists reveal_style text default 'scratch';
+-- ============================================================
 
 -- Aktifkan Row Level Security (WAJIB, jangan dilewati)
 alter table birthday_links enable row level security;

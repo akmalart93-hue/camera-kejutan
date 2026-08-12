@@ -7,12 +7,13 @@ export default function Landing() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const { data: birthday, loading, error } = useBirthdayLink(slug)
-  const { setSelectedFrame, setCapturedPhotos } = useContext(PhotoContext)
+  const { setSelectedFrame, setCapturedPhotos, setFinalPhoto } = useContext(PhotoContext)
 
   // Reset state photobox tiap kali link ini dibuka dari awal
   useEffect(() => {
     setSelectedFrame(null)
     setCapturedPhotos([])
+    setFinalPhoto(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

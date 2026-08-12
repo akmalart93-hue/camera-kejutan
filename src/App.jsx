@@ -19,10 +19,15 @@ export const PhotoContext = createContext(null)
 export default function App() {
   const [selectedFrame, setSelectedFrame] = useState(null)
   const [capturedPhotos, setCapturedPhotos] = useState([])
+  const [finalPhoto, setFinalPhoto] = useState(null)
 
   return (
     <PhotoContext.Provider
-      value={{ selectedFrame, setSelectedFrame, capturedPhotos, setCapturedPhotos }}
+      value={{
+        selectedFrame, setSelectedFrame,
+        capturedPhotos, setCapturedPhotos,
+        finalPhoto, setFinalPhoto,
+      }}
     >
       <HashRouter>
         <Routes>

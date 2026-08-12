@@ -313,6 +313,43 @@ export async function renderFrameComposite(frame, photoDataUrls = []) {
   canvas.height = frame.canvas.height
   const ctx = canvas.getContext('2d')
 
+  // ============================================================
+  // MODE GAMBAR ASLI — frame.overlayImage ada isinya berarti ini
+  // frame hasil upload user (PNG dengan lubang transparan), bukan
+  // yang digambar procedural. Foto ditaruh di posisi slot (cover-fit,
+  // dipotong sesuai bentuk), lalu gambar overlay-nya ditumpuk di atas —
+  // bagian transparan di overlay itulah yang menampakkan fotonya.
+  // ============================================================
+  if (frame.overlayImage) {
+    const images = await Promise.all(
+      frame.slots.map((_, i) => (photoDataUrls[i] ? loadImage(photoDataUrls[i]) : null))
+    )
+
+    frame.slots.forEach((slot, i) => {
+      const img = images[i]
+      ctx.save()
+      buildSlotPath(ctx, slot)
+      ctx.clip()
+      if (img) {
+        drawImageCover(ctx, img, slot.x, slot.y, slot.w, slot.h)
+      } else {
+        // Placeholder abu lembut dipakai untuk preview di galeri (belum ada foto)
+        ctx.fillStyle = '#e5e7eb'
+        ctx.fillRect(slot.x, slot.y, slot.w, slot.h)
+      }
+      ctx.restore()
+    })
+
+    const overlay = await loadImage(frame.overlayImage)
+    ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height)
+
+    return canvas.toDataURL('image/png')
+  }
+
+  // ============================================================
+  // MODE PROCEDURAL — frame digambar penuh lewat kode (lihat frames.js
+  // versi lama / bawaan sistem)
+  // ============================================================
   drawBackground(ctx, frame)
 
   // Dekorasi lapisan belakang (misal garis-garis sunset di belakang foto)
