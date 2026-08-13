@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import Landing from './pages/public/Landing'
 import FrameGallery from './pages/public/FrameGallery'
+import CustomFrameBuilder from './pages/public/CustomFrameBuilder'
 import Capture from './pages/public/Capture'
 import Result from './pages/public/Result'
 import Wishes from './pages/public/Wishes'
@@ -42,6 +43,7 @@ export default function App() {
           */}
           <Route path="/ucapan/:slug" element={<Landing />} />
           <Route path="/ucapan/:slug/frame" element={<FrameGallery />} />
+          <Route path="/ucapan/:slug/frame/custom" element={<CustomFrameBuilder />} />
           <Route path="/ucapan/:slug/foto" element={<Capture />} />
           <Route path="/ucapan/:slug/hasil" element={<Result />} />
           <Route path="/ucapan/:slug/wishes" element={<Wishes />} />

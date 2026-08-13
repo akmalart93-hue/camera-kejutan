@@ -1,8 +1,17 @@
-# 🎂 Birthday Photobox
+# 🎉 Ucapan & Photobox
 
-Website ucapan ulang tahun interaktif dengan fitur Photobox kamera, dashboard
-admin, dan hosting gratis di GitHub Pages. Panduan ini ditulis untuk pemula —
-ikuti dari atas ke bawah, jangan ada yang dilompati.
+Website ucapan interaktif untuk **momen apa saja** — ulang tahun,
+pernikahan, wisuda, kelahiran, atau acara apapun yang kamu mau — lengkap
+dengan fitur **Photobox** (kamera + frame + filter), dan **Dashboard Admin**
+buat mengatur semuanya tanpa perlu edit kode. Hosting-nya gratis lewat
+GitHub Pages. Panduan ini ditulis untuk pemula — ikuti dari atas ke bawah,
+jangan ada yang dilompati.
+
+Website ini bukan cuma buat satu jenis acara — dari Dashboard, kamu bisa
+atur judul ucapan ("Selamat Ulang Tahun", "Happy Wedding", "Selamat
+Wisuda", atau bebas ketik sendiri), nama penerima, isi pesan, font, warna,
+sampai kapan link-nya boleh dibuka. Satu website, dipakai berkali-kali
+untuk acara apa saja.
 
 ---
 
@@ -16,7 +25,9 @@ ikuti dari atas ke bawah, jangan ada yang dilompati.
 7. [Upload ke GitHub](#7-upload-ke-github)
 8. [Deploy ke GitHub Pages](#8-deploy-ke-github-pages)
 9. [Cara Pakai Sehari-hari](#9-cara-pakai-sehari-hari)
-10. [Troubleshooting](#10-troubleshooting)
+10. [Semua Fitur, Dijelaskan Satu-satu](#10-semua-fitur-dijelaskan-satu-satu)
+11. [Menambah Frame Sendiri (Gambar)](#11-menambah-frame-sendiri-gambar)
+12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
@@ -50,6 +61,13 @@ Kalau muncul nomor versi, berarti sudah siap.
 2. Buka file `supabase/schema.sql` yang ada di folder project ini, **copy semua isinya**.
 3. Paste ke SQL Editor, lalu klik **Run**.
 4. Kalau berhasil, akan muncul tabel `birthday_links` di menu **Table Editor**.
+   (Nama tabelnya masih `birthday_links` dari versi awal, tapi isinya sekarang
+   generik untuk acara apa saja — lihat kolom `greeting_title`.)
+
+> Kalau kamu meng-upgrade dari versi project yang lebih lama (tabelnya
+> sudah ada duluan), jangan jalankan ulang `create table`-nya — cukup
+> jalankan baris-baris `alter table ... add column if not exists ...` yang
+> ada di bagian bawah file `schema.sql`. Detailnya ada di komentar file itu.
 
 ### 2.3 Buat Akun Admin (Kamu Sendiri)
 Website ini **tidak punya halaman daftar (sign up)** — ini sengaja, supaya
@@ -76,18 +94,8 @@ Kalau kamu menerima project ini sebagai file `.zip`:
 # Ekstrak zip, lalu masuk ke foldernya
 cd birthday-photobox
 
-# Install semua dependency (React, Tailwind, Supabase, dll)
+# Install semua dependency (React, Tailwind, Supabase, QR Code, dll)
 npm install
-```
-
-Kalau mau mulai dari nol sendiri (opsional, tidak perlu kalau sudah pakai project ini):
-```bash
-npm create vite@latest birthday-photobox -- --template react
-cd birthday-photobox
-npm install
-npm install @supabase/supabase-js react-router-dom canvas-confetti
-npm install -D tailwindcss postcss autoprefixer gh-pages
-npx tailwindcss init -p
 ```
 
 ---
@@ -131,9 +139,9 @@ export default defineConfig({
 })
 ```
 
-Contoh: kalau nanti repo kamu bernama `ucapan-ultah-adik`, maka:
+Contoh: kalau nanti repo kamu bernama `ucapan-interaktif`, maka:
 ```js
-base: '/ucapan-ultah-adik/',
+base: '/ucapan-interaktif/',
 ```
 
 > 💡 Kalau lupa mengganti ini, website akan tampil **blank putih** setelah
@@ -168,7 +176,7 @@ ucapan uji coba dari Dashboard.
 ```bash
 git init
 git add .
-git commit -m "Initial commit: Birthday Photobox"
+git commit -m "Initial commit"
 git branch -M main
 git remote add origin https://github.com/<username-kamu>/<nama-repo>.git
 git push -u origin main
@@ -211,93 +219,126 @@ https://<username-kamu>.github.io/<nama-repo>/
 
 ### 🅱️ Cara B — Manual dengan Package `gh-pages`
 
-Kalau kamu lebih suka deploy manual dari komputer sendiri:
-
 ```bash
 npm run deploy
 ```
-
-Perintah ini akan otomatis:
-1. Menjalankan `npm run build` (membuat folder `dist`)
-2. Mem-push isi folder `dist` ke branch `gh-pages`
-
+Ini otomatis `npm run build` lalu push folder `dist` ke branch `gh-pages`.
 Lalu di GitHub: **Settings** → **Pages** → **Source**, pilih branch
 **`gh-pages`** dan folder **`/ (root)`** → **Save**.
-
-> ⚠️ Catatan Cara B: environment variable dari `.env` akan ikut ter-bundle
-> ke dalam file JS hasil build di komputermu sendiri saat build lokal — ini
-> tetap aman selama kamu tidak meng-commit file `.env` itu sendiri ke Git.
 
 ---
 
 ## 9. Cara Pakai Sehari-hari
 
 1. Buka `https://<username>.github.io/<repo>/#/admin/login`, login.
-2. Di Dashboard, isi **nama** yang berulang tahun + **pesan** ucapan → **Buat Link**.
-3. Klik **Salin Link** di daftar link, lalu kirim link tersebut (WA, dsb).
-4. Saat dibuka, penerima akan melalui alur: sapaan → **pilih frame** dari
-   galeri (3 kategori: Aesthetic, Retro, Cute Shapes) → **jepret foto**
-   beberapa kali sesuai jumlah slot frame (bisa ambil ulang kalau kurang
-   pas) → lihat hasil gabungan & download → **gosok scratch card** untuk
-   membuka ucapanmu, lengkap dengan confetti. 🎉
+2. Di Dashboard:
+   - Klik salah satu **preset jenis acara** (Ulang Tahun / Pernikahan /
+     Wisuda / Kelahiran / Umum) — ini otomatis isi judul & emoji, tapi
+     kamu bebas edit lagi manual.
+   - Isi **nama penerima** dan **pesan**.
+   - Atur **font**, **warna teks**, **warna judul**.
+   - Pilih **gaya buka pesan** (Scratch Card / Tap Balon / Langsung).
+   - (Opsional) set **tanggal** kalau mau link-nya baru bisa dibuka mulai
+     hari tertentu (misal: dibuat H-3, tapi baru bisa dibuka pas hari-H).
+   - Lihat **live preview** di sebelahnya berubah real-time sesuai pengaturan.
+   - Klik **Buat Link**.
+3. Di daftar link, klik **Salin Link** (untuk dikirim lewat chat) atau
+   **QR Code** (untuk di-download & ditempel di kartu fisik / undangan).
+4. Penerima buka link/scan QR-nya, lalu melalui alur:
+   sapaan → **pilih frame** (33 desain siap pakai, atau **buat frame
+   sendiri** bebas atur jumlah foto & ukurannya) → **pilih filter kamera**
+   → jepret foto sejumlah slot frame (bisa **ganti kamera depan/belakang**,
+   bisa **ambil ulang** tiap foto) → lihat hasil gabungan & download →
+   buka pesan sesuai gaya interaksi yang kamu pilih, lengkap dengan confetti.
 
 Setiap link punya ID unik (slug), jadi kamu bisa membuat link baru untuk
-setiap orang tanpa perlu mengubah kode sama sekali.
+setiap acara/orang tanpa perlu mengubah kode sama sekali.
 
 ---
 
-## 9a. Cara Menambah Frame Baru (Tanpa Bikin Gambar!)
+## 10. Semua Fitur, Dijelaskan Satu-satu
 
-Semua frame photobox **digambar langsung lewat kode** (Canvas), bukan pakai
-file gambar siap pakai. Jadi menambah desain baru tidak perlu buka
-Photoshop/Figma — cukup edit satu file data: **`src/data/frames.js`**.
+### 🎨 33 Frame Siap Pakai + Frame Builder Bebas
+Galeri berisi 33 desain frame (gaya Y2K, retro, aesthetic, dst) dengan
+jumlah foto bervariasi (1-4 slot). Kalau mau lebih bebas, ada tombol
+**"Buat Frame Sendiri"** di galeri — bisa atur sendiri: jumlah foto (1-8),
+layout (strip vertikal / grid 2 kolom), rasio (potret/persegi/story),
+warna latar, dan sudut kotak/membulat. Tidak terpaku template.
+
+### 🎞️ 30 Filter Kamera
+Dipilih langsung sebelum motret, efeknya ikut "terbakar" ke hasil foto
+(bukan cuma preview). Ada gaya natural, beauty/glowy, B&W, vintage, sampai
+yang vivid/kontras tinggi.
+
+### 🔄 Kamera Depan/Belakang + Ambil Ulang
+Ada tombol switch kamera (berguna di HP), dan tiap habis jepret ada
+pilihan "Ambil Ulang" sebelum foto itu dipakai — jadi tidak perlu mulai
+dari awal kalau hasilnya kurang pas.
+
+### ✍️ Font & Warna Custom
+Pilih dari beberapa font (termasuk gaya tulisan tangan/script) dan warna
+teks + warna judul, semuanya lewat Dashboard, tanpa sentuh kode.
+
+### 🎈 3 Gaya Buka Pesan
+- **Scratch Card** — digosok pakai jari
+- **Tap Balon** — pecahkan semua balon dulu
+- **Langsung** — tanpa interaksi, langsung tampil + confetti
+
+### 🔒 Kunci Tanggal
+Set tanggal di Dashboard supaya link baru bisa dibuka penerima mulai
+tanggal itu — cocok kalau kamu mau siapkan link jauh-jauh hari tapi baru
+mau dibuka pas hari-H.
+
+### 📱 QR Code
+Tiap link otomatis bisa di-generate jadi gambar QR (di-download), buat
+ditempel di kartu ucapan fisik atau undangan cetak — bukan cuma dikirim
+sebagai link digital.
+
+---
+
+## 11. Menambah Frame Sendiri (Gambar)
+
+Selain "Buat Frame Sendiri" yang otomatis (lihat fitur di atas), kamu juga
+bisa menambah frame dari **gambar PNG buatan sendiri** (didesain di Canva,
+Photoshop, dll) ke galeri utama:
 
 ### Langkah singkat:
-1. Buka `src/data/frames.js`.
-2. Duplikat salah satu objek frame yang paling mirip dengan yang kamu mau.
-3. Ganti bagian-bagian ini:
-   - `id` — harus unik, tidak boleh sama dengan frame lain.
-   - `name` — nama yang tampil di galeri.
-   - `category` — salah satu dari: `'aesthetic'`, `'retro'`, `'cute'` (atau
-     tambah kategori baru sendiri di `FRAME_CATEGORIES`).
-   - `shotCount` — otomatis mengikuti jumlah item di `slots`.
-   - `slots` — daftar posisi & bentuk tiap foto. Tiap slot punya:
-     - `x, y, w, h` — posisi & ukuran (dalam satuan piksel kanvas)
-     - `shape` — salah satu dari: `'rect'`, `'rounded'`, `'circle'`, `'bear'`, `'cat'`, `'heart'`
-     - `rotation` — opsional, memutar slot (contoh: efek foto polaroid berserakan)
-4. Simpan file. Frame baru **otomatis muncul** di galeri publik — tidak
-   perlu ubah kode di tempat lain.
+1. Desain frame-mu dengan bagian tempat foto **dibiarkan transparan**
+   (PNG dengan alpha channel).
+2. Taruh file-nya di `public/frames-custom/`.
+3. Buka `src/data/frames.js`, tambah satu objek baru di array `FRAMES`:
 
-### Contoh menambah frame baru super sederhana:
 ```js
 {
-  id: 'aesthetic-simple-strip',
-  category: 'aesthetic',
-  name: 'Simple Strip',
-  shotCount: 2,
-  canvas: { width: 800, height: 900 },
-  background: { type: 'solid', color: '#ffffff' },
+  id: 'frame-baru-saya',
+  category: 'custom',
+  name: 'Nama Frame Saya',
+  shotCount: 3, // sesuai jumlah lubang transparan
+  canvas: { width: 1000, height: 1500 }, // sesuai ukuran gambar aslimu
+  overlayImage: `${BASE}frames-custom/frame-baru-saya.png`,
+  thumbnail: `${BASE}frames-custom/thumbs/frame-baru-saya.jpg`, // versi kecil, opsional
   slots: [
-    { x: 100, y: 60, w: 600, h: 350, shape: 'rounded', radius: 20 },
-    { x: 100, y: 440, w: 600, h: 350, shape: 'rounded', radius: 20 },
+    { x: 100, y: 100, w: 800, h: 400, shape: 'rect' }, // koordinat lubang ke-1
+    { x: 100, y: 550, w: 800, h: 400, shape: 'rect' }, // koordinat lubang ke-2
+    { x: 100, y: 1000, w: 800, h: 400, shape: 'rect' }, // koordinat lubang ke-3
   ],
-  caption: { text: 'simple & sweet', y: 860, color: '#333333' },
-}
+},
 ```
 
-### Menambah dekorasi (opsional):
-Tersedia tipe: `dot`, `star`, `heart`, `tape`, `leaf`, `paw`, `stripe`,
-`sprocket-column`. Lihat contoh pemakaiannya di frame-frame yang sudah ada
-untuk parameter yang dibutuhkan tiap tipe (posisi, ukuran, warna).
+4. Koordinat `x, y, w, h` itu posisi & ukuran tiap lubang transparan, dalam
+   satuan piksel gambar aslimu (bukan piksel layar). Cara termudah cari
+   angkanya: buka gambarmu di editor (Photoshop/GIMP/Figma), lihat posisi
+   & ukuran tiap kotak seleksi area transparan.
+5. Simpan file. Frame baru otomatis muncul di galeri.
 
-> 💡 Kalau mau bentuk slot yang benar-benar baru (bukan salah satu dari 6
-> bentuk yang ada), itu perlu tambahan kode di `src/utils/frameRenderer.js`
-> bagian `SHAPE_BUILDERS`. Untuk sekadar mengombinasikan bentuk & posisi
-> yang sudah ada, cukup edit `frames.js` saja.
+> 💡 Tidak punya waktu bikin thumbnail kecil sendiri? Boleh pakai gambar
+> full-res yang sama di `thumbnail` juga (cuma lebih berat dimuat di
+> galeri) — atau hapus baris `thumbnail` sama sekali, nanti sistem akan
+> coba render preview dari `overlayImage` langsung.
 
 ---
 
-## 10. Troubleshooting
+## 12. Troubleshooting
 
 | Masalah | Penyebab & Solusi |
 |---|---|
@@ -307,7 +348,9 @@ untuk parameter yang dibutuhkan tiap tipe (posisi, ukuran, warna).
 | Data tidak muncul di halaman publik | Cek RLS Policy di Supabase — pastikan policy "Public can read" untuk `select` sudah aktif (lihat `supabase/schema.sql`). |
 | GitHub Actions gagal (merah ❌) | Buka tab Actions → klik run yang gagal → baca log error. Biasanya karena Secrets belum diisi di langkah 8A. |
 | Link `#/ucapan/xxx` menampilkan "tidak ditemukan" | Slug di URL tidak cocok dengan data di database. Salin ulang link dari Dashboard, jangan diketik manual. |
-| Foto hasil download terbalik / ke-crop aneh | Frame di `public/frames/frame1.svg` didesain rasio 1:1 (persegi). Kalau ganti frame custom, pastikan juga rasio persegi. |
+| Muncul error soal kolom database (`greeting_title`, `font_family`, dst tidak ada) | Kamu belum jalankan migrasi `alter table` terbaru. Buka `supabase/schema.sql`, jalankan semua baris `alter table ... add column if not exists ...` di SQL Editor. |
+| Link terkunci padahal harusnya sudah bisa dibuka | Cek kolom `event_date` link itu di Supabase Table Editor — pastikan tanggalnya sudah lewat/sama dengan hari ini. |
+| Font pilihan tidak kelihatan bedanya | Font dimuat dari Google Fonts lewat internet — pastikan koneksi internet penerima aktif saat membuka link. |
 
 ---
 
@@ -315,19 +358,26 @@ untuk parameter yang dibutuhkan tiap tipe (posisi, ukuran, warna).
 
 ```
 birthday-photobox/
-├── .github/workflows/deploy.yml   ← Auto-deploy via GitHub Actions
-├── public/frames/frame1.svg       ← Frame photobox (bisa diganti gambar sendiri)
-├── supabase/schema.sql            ← Skema database, jalankan di SQL Editor
+├── .github/workflows/deploy.yml     ← Auto-deploy via GitHub Actions
+├── public/frames-custom/            ← 33 gambar frame + thumbnail galeri
+├── supabase/schema.sql              ← Skema database, jalankan di SQL Editor
 ├── src/
-│   ├── lib/supabase.js            ← Koneksi ke Supabase
-│   ├── hooks/useBirthdayLink.js   ← Ambil data ucapan by slug
-│   ├── utils/mergePhotoWithFrame.js ← Logic Canvas: gabung foto + frame
-│   ├── components/AdminRoute.jsx  ← Proteksi halaman admin
-│   ├── pages/admin/               ← Login & Dashboard (CRUD)
-│   ├── pages/public/              ← Landing (kamera), Result (photobox), Wishes (ucapan+confetti)
-│   └── App.jsx                    ← HashRouter + semua routing
-├── vite.config.js                 ← base path GitHub Pages
-└── .env                           ← Kredensial Supabase (jangan di-commit!)
+│   ├── lib/supabase.js              ← Koneksi ke Supabase
+│   ├── hooks/useBirthdayLink.js     ← Ambil data ucapan by slug
+│   ├── hooks/useCamera.js           ← Akses kamera + switch depan/belakang
+│   ├── data/frames.js               ← Katalog 33 frame (gambar)
+│   ├── data/cameraFilters.js        ← 30 filter kamera
+│   ├── data/fontOptions.js          ← Pilihan font & warna
+│   ├── utils/frameRenderer.js       ← Mesin gabung foto + frame (Canvas)
+│   ├── utils/customFrameBuilder.js  ← Generator frame custom on-the-fly
+│   ├── components/AdminRoute.jsx    ← Proteksi halaman admin
+│   ├── components/ScratchCard.jsx   ← Interaksi gosok
+│   ├── components/TapBalloons.jsx   ← Interaksi tap balon
+│   ├── pages/admin/                 ← Login & Dashboard (editor + QR)
+│   ├── pages/public/                ← Landing, FrameGallery, Capture, Result, Wishes
+│   └── App.jsx                      ← HashRouter + semua routing
+├── vite.config.js                   ← base path GitHub Pages
+└── .env                             ← Kredensial Supabase (jangan di-commit!)
 ```
 
-Selamat membuat kejutan untuk orang-orang tersayang! 🎁
+Selamat membuat kejutan untuk momen apapun! 🎁

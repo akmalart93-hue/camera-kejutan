@@ -9,7 +9,7 @@ export default function Capture() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const { selectedFrame, setCapturedPhotos } = useContext(PhotoContext)
-  const { videoRef, cameraState, startCamera, stopCamera } = useCamera()
+  const { videoRef, cameraState, facingMode, switching, startCamera, stopCamera, switchCamera } = useCamera()
 
   const [shots, setShots] = useState([])
   const [pendingShot, setPendingShot] = useState(null)
@@ -36,8 +36,9 @@ export default function Capture() {
     setFlash(true)
     setTimeout(() => setFlash(false), 300)
     // Filter yang lagi dipilih ikut "dibakar" ke foto hasil, bukan cuma
-    // tampilan preview — jadi hasil download nanti konsisten sama yg dilihat
-    const dataUrl = captureVideoFrame(videoRef.current, true, activeFilter.css)
+    // tampilan preview — jadi hasil download nanti konsisten sama yg dilihat.
+    // Mirror hanya untuk kamera depan (selfie); kamera belakang tidak di-mirror.
+    const dataUrl = captureVideoFrame(videoRef.current, facingMode === 'user', activeFilter.css)
     setPendingShot(dataUrl)
   }
 
@@ -83,10 +84,31 @@ export default function Capture() {
           playsInline
           muted
           style={{ filter: !pendingShot ? activeFilter.css : 'none' }}
-          className={`mirror absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-            cameraState === 'active' && !pendingShot ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+            facingMode === 'user' ? 'mirror' : ''
+          } ${cameraState === 'active' && !pendingShot ? 'opacity-100' : 'opacity-0'}`}
         />
+
+        {/* Tombol ganti kamera depan/belakang */}
+        {cameraState === 'active' && !pendingShot && (
+          <button
+            onClick={switchCamera}
+            disabled={switching}
+            aria-label="Ganti kamera"
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition disabled:opacity-50"
+          >
+            {switching ? (
+              <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 12v-2a4 4 0 0 1 4-4h14" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 22l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M21 12v2a4 4 0 0 1-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        )}
 
         {pendingShot && (
           <img

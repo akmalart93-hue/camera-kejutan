@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { PhotoContext } from '../../App'
 import { FRAMES } from '../../data/frames'
 import FramePreview from '../../components/FramePreview'
@@ -23,18 +23,33 @@ export default function FrameGallery() {
         </p>
       </div>
 
-      <div className="max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {FRAMES.map((frame) => (
-          <button
-            key={frame.id}
-            onClick={() => handlePick(frame)}
-            className="bg-white rounded-2xl shadow-sm hover:shadow-md active:scale-[0.98] transition p-2 text-left"
-          >
-            <FramePreview frame={frame} />
-            <p className="text-sm font-semibold text-gray-800 mt-2 px-1">{frame.name}</p>
-            <p className="text-xs text-gray-400 px-1 pb-1">{frame.shotCount} foto</p>
-          </button>
-        ))}
+      <div className="max-w-3xl mx-auto">
+        {/* Pintu masuk ke Frame Builder — bebas atur jumlah foto & ukuran sendiri */}
+        <Link
+          to={`/ucapan/${slug}/frame/custom`}
+          className="mb-4 flex items-center gap-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-2xl p-4 shadow-sm hover:shadow-md active:scale-[0.99] transition"
+        >
+          <span className="text-2xl">🎨</span>
+          <div className="text-left">
+            <p className="font-semibold text-sm">Buat Frame Sendiri</p>
+            <p className="text-xs text-white/80">Atur bebas jumlah foto & ukurannya, gak harus ikut template</p>
+          </div>
+          <span className="ml-auto text-lg">→</span>
+        </Link>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {FRAMES.map((frame) => (
+            <button
+              key={frame.id}
+              onClick={() => handlePick(frame)}
+              className="bg-white rounded-2xl shadow-sm hover:shadow-md active:scale-[0.98] transition p-2 text-left"
+            >
+              <FramePreview frame={frame} />
+              <p className="text-sm font-semibold text-gray-800 mt-2 px-1">{frame.name}</p>
+              <p className="text-xs text-gray-400 px-1 pb-1">{frame.shotCount} foto</p>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

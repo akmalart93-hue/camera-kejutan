@@ -28,9 +28,9 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-5xl">🎂</span>
+          <span className="text-5xl">🎉</span>
           <h1 className="text-2xl font-bold text-gray-800 mt-3">Admin Panel</h1>
-          <p className="text-gray-500 text-sm mt-1">Kelola ucapan ulang tahunmu</p>
+          <p className="text-gray-500 text-sm mt-1">Kelola ucapan & momen spesialmu</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import { PhotoContext } from '../../App'
 import { useBirthdayLink } from '../../hooks/useBirthdayLink'
+import { getFontFamily } from '../../data/fontOptions'
 import ScratchCard from '../../components/ScratchCard'
 import TapBalloons from '../../components/TapBalloons'
 
@@ -42,7 +43,13 @@ export default function Wishes() {
 
   const MessageCard = (
     <div className="bg-white/90 backdrop-blur rounded-2xl p-6 sm:p-8 h-full flex items-center">
-      <p className="text-gray-700 leading-relaxed whitespace-pre-line text-left">
+      <p
+        className="leading-relaxed whitespace-pre-line text-left"
+        style={{
+          fontFamily: getFontFamily(birthday.font_family),
+          color: birthday.text_color || '#374151',
+        }}
+      >
         {birthday.message}
       </p>
     </div>
@@ -51,9 +58,11 @@ export default function Wishes() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-yellow-50 via-pink-50 to-purple-100 flex items-center justify-center px-4 py-10">
       <div className="max-w-md w-full text-center">
-        <span className="text-6xl block mb-3">🎂🎉</span>
-        <h1 className="text-2xl font-bold text-gray-800">Selamat Ulang Tahun,</h1>
-        <h2 className="text-2xl font-bold text-pink-500 mb-5">{birthday.name}!</h2>
+        <span className="text-6xl block mb-3">{birthday.greeting_emoji || '🎉'}</span>
+        <h1 className="text-2xl font-bold text-gray-800">{birthday.greeting_title || 'Selamat untuk'},</h1>
+        <h2 className="text-2xl font-bold mb-5" style={{ color: birthday.accent_color || '#ec4899' }}>
+          {birthday.name}!
+        </h2>
 
         {/* Foto hasil photobox, kalau ada (dari kunjungan yang baru saja terjadi) */}
         {finalPhoto && (
