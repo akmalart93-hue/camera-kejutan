@@ -46,6 +46,8 @@ export default function Dashboard() {
   const [copiedSlug, setCopiedSlug] = useState(null)
   const [formError, setFormError] = useState('')
   const [qrModal, setQrModal] = useState(null) // { name, slug, dataUrl } | null
+  const [uploadingMusic, setUploadingMusic] = useState(false)
+  const [musicUploadError, setMusicUploadError] = useState('')
   const navigate = useNavigate()
   const formSectionRef = useRef(null)
 
@@ -75,6 +77,44 @@ export default function Dashboard() {
       .replace(/[^a-z0-9-]/g, '')
     const uniquePart = crypto.randomUUID().split('-')[0]
     return `${base || 'ucapan'}-${uniquePart}`
+  }
+
+  // Upload file musik ke Supabase Storage (bucket "music"), lalu simpan
+  // URL publiknya ke form.music_url. Jauh lebih stabil dibanding tempel
+  // link Google Drive, karena file-nya beneran ke-hosting sebagai file.
+  const handleMusicUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setMusicUploadError('')
+
+    if (!file.type.startsWith('audio/')) {
+      setMusicUploadError('File harus berupa audio (mp3, dll).')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setMusicUploadError('File terlalu besar (maks 20MB). Coba kompres dulu mp3-nya.')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingMusic(true)
+    const ext = file.name.split('.').pop()
+    const path = `${crypto.randomUUID()}.${ext}`
+
+    const { error: uploadError } = await supabase.storage.from('music').upload(path, file)
+
+    if (uploadError) {
+      setMusicUploadError('Gagal upload: ' + uploadError.message)
+      setUploadingMusic(false)
+      e.target.value = ''
+      return
+    }
+
+    const { data } = supabase.storage.from('music').getPublicUrl(path)
+    updateForm({ music_url: data.publicUrl })
+    setUploadingMusic(false)
   }
 
   const handleSubmit = async (e) => {
@@ -411,29 +451,49 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              {/* ---- Musik latar ---- */}
+              {/* ---- Musik latar (upload file langsung) ---- */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Musik Latar <span className="text-gray-400 font-normal">(opsional)</span>
                 </label>
-                <input
-                  type="text"
-                  value={form.music_url}
-                  onChange={(e) => updateForm({ music_url: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition"
-                  placeholder="Link mp3, link share Google Drive, atau path file sendiri"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Bisa isi: link langsung ke file .mp3, link share Google Drive (pastikan
-                  di-share sebagai "Anyone with the link"), atau path file yang kamu host
-                  sendiri di folder <code className="bg-gray-100 px-1 rounded">public/</code>
-                  {' '}(contoh: <code className="bg-gray-100 px-1 rounded">music/lagu1.mp3</code>).
-                  Musik otomatis mulai saat penerima membuka pesannya. Kosongkan kalau
-                  tidak perlu musik.
-                </p>
-                {form.music_url.trim() && (
-                  <audio controls src={resolveMusicUrl(form.music_url)} className="w-full mt-2 h-9" />
+
+                {form.music_url.trim() ? (
+                  <div className="space-y-2">
+                    <audio controls src={resolveMusicUrl(form.music_url)} className="w-full h-9" />
+                    <button
+                      type="button"
+                      onClick={() => updateForm({ music_url: '' })}
+                      className="text-xs font-medium text-red-500 hover:text-red-700"
+                    >
+                      🗑 Hapus musik ini
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={handleMusicUpload}
+                      disabled={uploadingMusic}
+                      className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 file:cursor-pointer disabled:opacity-50"
+                    />
+                    {uploadingMusic && (
+                      <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
+                        <span className="w-3 h-3 border-2 border-gray-300 border-t-pink-400 rounded-full animate-spin inline-block" />
+                        Mengupload…
+                      </p>
+                    )}
+                    {musicUploadError && (
+                      <p className="text-xs text-red-500 mt-1.5">{musicUploadError}</p>
+                    )}
+                  </div>
                 )}
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Upload file mp3 (idealnya di bawah ±10MB biar cepat dimuat). Musik
+                  otomatis mulai saat penerima membuka pesannya. Kosongkan kalau tidak
+                  perlu musik.
+                </p>
               </div>
 
               {formError && (
