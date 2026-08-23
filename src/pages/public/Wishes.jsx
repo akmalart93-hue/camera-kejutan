@@ -5,6 +5,7 @@ import { PhotoContext } from '../../App'
 import { useBirthdayLink } from '../../hooks/useBirthdayLink'
 import { getFontFamily } from '../../data/fontOptions'
 import { getBgTheme } from '../../data/bgThemes'
+import { resolveMusicUrl } from '../../utils/musicUrl'
 import ScratchCard from '../../components/ScratchCard'
 import TapBalloons from '../../components/TapBalloons'
 import EnvelopeReveal from '../../components/EnvelopeReveal'
@@ -84,7 +85,7 @@ export default function Wishes() {
   return (
     <div className={`relative min-h-screen ${theme.pageClass} flex items-center justify-center px-4 py-10 overflow-hidden`}>
       <FloatingDecor />
-      <BackgroundMusic ref={musicRef} url={birthday.music_url} />
+      <BackgroundMusic ref={musicRef} url={resolveMusicUrl(birthday.music_url)} />
 
       <div className="relative z-10 max-w-md w-full text-center">
         <span className="text-6xl block mb-3">{birthday.greeting_emoji || '🎉'}</span>
