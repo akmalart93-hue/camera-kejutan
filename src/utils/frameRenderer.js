@@ -261,6 +261,32 @@ function drawSprocketColumn(ctx, { side, color, canvasWidth, canvasHeight, count
   }
 }
 
+// Teks bebas — dipakai fitur "hias sendiri" di Custom Frame Builder
+function drawTextDecor(ctx, { x, y, text, color, size, rotation = 0, fontFamily }) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate((rotation * Math.PI) / 180)
+  ctx.font = `700 ${size}px ${fontFamily || "'Poppins', sans-serif"}`
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, 0, 0)
+  ctx.restore()
+}
+
+// Emoji bebas — sama seperti teks, tapi font-nya dibiarkan default (emoji
+// tidak butuh font family khusus, browser otomatis pakai emoji font)
+function drawEmojiDecor(ctx, { x, y, emoji, size, rotation = 0 }) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate((rotation * Math.PI) / 180)
+  ctx.font = `${size}px sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, 0, 0)
+  ctx.restore()
+}
+
 const DECORATION_DRAWERS = {
   dot: drawDot,
   star: drawStar,
@@ -270,6 +296,8 @@ const DECORATION_DRAWERS = {
   paw: drawPaw,
   stripe: drawStripeBand,
   'sprocket-column': drawSprocketColumn,
+  text: drawTextDecor,
+  emoji: drawEmojiDecor,
 }
 
 function drawDecoration(ctx, d, canvasWidth, canvasHeight) {

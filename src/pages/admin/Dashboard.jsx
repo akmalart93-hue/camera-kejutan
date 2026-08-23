@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { supabase } from '../../lib/supabase'
 import { FONT_OPTIONS, DEFAULT_FONT_ID, COLOR_PRESETS, DEFAULT_TEXT_COLOR, DEFAULT_ACCENT_COLOR, getFontFamily } from '../../data/fontOptions'
+import { BG_THEMES, DEFAULT_BG_THEME_ID } from '../../data/bgThemes'
 
 const REVEAL_STYLES = [
   { id: 'scratch', label: 'Scratch Card', emoji: '🪙', desc: 'Digosok pakai jari' },
   { id: 'tap-balloons', label: 'Tap Balon', emoji: '🎈', desc: 'Pecahkan semua balon' },
+  { id: 'envelope', label: 'Amplop', emoji: '💌', desc: 'Ketuk amplop dibuka' },
   { id: 'simple', label: 'Langsung', emoji: '✨', desc: 'Tanpa interaksi' },
 ]
 
@@ -30,17 +32,21 @@ const INITIAL_FORM = {
   text_color: DEFAULT_TEXT_COLOR,
   accent_color: DEFAULT_ACCENT_COLOR,
   event_date: '',
+  music_url: '',
+  bg_theme: DEFAULT_BG_THEME_ID,
 }
 
 export default function Dashboard() {
   const [links, setLinks] = useState([])
   const [form, setForm] = useState(INITIAL_FORM)
+  const [editingId, setEditingId] = useState(null) // null = mode buat baru, isi = mode edit
   const [loadingList, setLoadingList] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [copiedSlug, setCopiedSlug] = useState(null)
   const [formError, setFormError] = useState('')
   const [qrModal, setQrModal] = useState(null) // { name, slug, dataUrl } | null
   const navigate = useNavigate()
+  const formSectionRef = useRef(null)
 
   useEffect(() => {
     fetchLinks()
@@ -80,10 +86,8 @@ export default function Dashboard() {
     }
 
     setSubmitting(true)
-    const slug = generateSlug(form.name)
 
-    const { error } = await supabase.from('birthday_links').insert({
-      slug,
+    const payload = {
       name: form.name.trim(),
       message: form.message.trim(),
       greeting_title: form.greeting_title.trim() || 'Selamat untuk',
@@ -93,20 +97,65 @@ export default function Dashboard() {
       text_color: form.text_color,
       accent_color: form.accent_color,
       event_date: form.event_date || null,
-    })
+      music_url: form.music_url.trim() || null,
+      bg_theme: form.bg_theme,
+    }
+
+    let error
+    if (editingId) {
+      // Mode edit: update data yang sudah ada. Slug SENGAJA tidak diubah,
+      // supaya link yang sudah dikirim/ditempel ke undangan tetap valid.
+      ;({ error } = await supabase.from('birthday_links').update(payload).eq('id', editingId))
+    } else {
+      // Mode buat baru: generate slug unik dulu
+      const slug = generateSlug(form.name)
+      ;({ error } = await supabase.from('birthday_links').insert({ slug, ...payload }))
+    }
 
     if (error) {
       setFormError('Gagal menyimpan: ' + error.message)
     } else {
       setForm(INITIAL_FORM)
+      setEditingId(null)
       fetchLinks()
     }
     setSubmitting(false)
   }
 
+  const handleEdit = (link) => {
+    setEditingId(link.id)
+    setForm({
+      name: link.name || '',
+      message: link.message || '',
+      greeting_title: link.greeting_title || 'Selamat Ulang Tahun',
+      greeting_emoji: link.greeting_emoji || '🎂🎉',
+      reveal_style: link.reveal_style || 'scratch',
+      font_family: link.font_family || DEFAULT_FONT_ID,
+      text_color: link.text_color || DEFAULT_TEXT_COLOR,
+      accent_color: link.accent_color || DEFAULT_ACCENT_COLOR,
+      event_date: link.event_date || '',
+      music_url: link.music_url || '',
+      bg_theme: link.bg_theme || DEFAULT_BG_THEME_ID,
+    })
+    setFormError('')
+    formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setForm(INITIAL_FORM)
+    setFormError('')
+  }
+
   const handleDelete = async (id) => {
     if (!confirm('Yakin ingin menghapus link ini? Tindakan ini tidak bisa dibatalkan.')) return
     await supabase.from('birthday_links').delete().eq('id', id)
+    // Kalau link yang lagi diedit ternyata yang dihapus, keluar dari mode edit
+    // biar tombol "Simpan Perubahan" tidak nyoba update baris yang sudah hilang
+    if (editingId === id) {
+      setEditingId(null)
+      setForm(INITIAL_FORM)
+    }
     fetchLinks()
   }
 
@@ -153,6 +202,7 @@ export default function Dashboard() {
   }
 
   const todayStr = new Date().toISOString().slice(0, 10)
+  const activeBgTheme = BG_THEMES.find((t) => t.id === form.bg_theme) || BG_THEMES[0]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -169,11 +219,22 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* ---- Form + Live Preview: Buat Link Baru ---- */}
-        <section className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
-            ✨ Buat Link Ucapan Baru
-          </h2>
+        {/* ---- Form + Live Preview: Buat / Edit Link ---- */}
+        <section ref={formSectionRef} className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-800">
+              {editingId ? '✏️ Edit Link' : '✨ Buat Link Ucapan Baru'}
+            </h2>
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="text-xs font-medium text-gray-400 hover:text-gray-600"
+              >
+                Batal Edit
+              </button>
+            )}
+          </div>
 
           <div className="grid lg:grid-cols-5 gap-6">
             {/* ---- Kolom form ---- */}
@@ -282,6 +343,30 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* ---- Tema latar halaman ucapan ---- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tema Latar Halaman <span className="text-gray-400 font-normal">(interaksi & layout tetap sama)</span>
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {BG_THEMES.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => updateForm({ bg_theme: t.id })}
+                      className={`rounded-xl border-2 overflow-hidden transition ${
+                        form.bg_theme === t.id ? 'border-pink-500 scale-[1.03]' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="h-8 w-full" style={{ background: t.preview }} />
+                      <div className="py-1 bg-white text-center">
+                        <span className="text-[10px] font-medium text-gray-700">{t.emoji} {t.label}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* ---- Gaya interaksi ---- */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -325,6 +410,27 @@ export default function Dashboard() {
                 </p>
               </div>
 
+              {/* ---- Musik latar ---- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Musik Latar <span className="text-gray-400 font-normal">(opsional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.music_url}
+                  onChange={(e) => updateForm({ music_url: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition"
+                  placeholder="https://contoh.com/lagu.mp3"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Tempel link langsung ke file audio (.mp3). Musik akan otomatis mulai
+                  saat penerima membuka pesannya. Kosongkan kalau tidak perlu musik.
+                </p>
+                {form.music_url.trim() && (
+                  <audio controls src={form.music_url.trim()} className="w-full mt-2 h-9" />
+                )}
+              </div>
+
               {formError && (
                 <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{formError}</p>
               )}
@@ -334,7 +440,7 @@ export default function Dashboard() {
                 disabled={submitting}
                 className="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 active:scale-[0.98] text-white font-semibold px-6 py-2.5 rounded-lg transition disabled:opacity-50"
               >
-                {submitting ? 'Menyimpan…' : 'Buat Link'}
+                {submitting ? 'Menyimpan…' : editingId ? 'Simpan Perubahan' : 'Buat Link'}
               </button>
             </form>
 
@@ -343,10 +449,12 @@ export default function Dashboard() {
               <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
                 Live Preview
               </p>
-              <div className="sticky top-20 rounded-2xl bg-gradient-to-b from-yellow-50 via-pink-50 to-purple-100 p-5 border border-gray-100">
+              <div className={`sticky top-20 rounded-2xl ${activeBgTheme.pageClass} p-5 border border-gray-100`}>
                 <div className="text-center">
                   <span className="text-4xl block mb-2">{form.greeting_emoji || '🎉'}</span>
-                  <p className="text-sm text-gray-500">{form.greeting_title || 'Selamat untuk'},</p>
+                  <p className="text-sm" style={{ color: activeBgTheme.hintColor }}>
+                    {form.greeting_title || 'Selamat untuk'},
+                  </p>
                   <h3
                     className="text-lg font-bold mb-3 break-words"
                     style={{ color: form.accent_color }}
@@ -361,9 +469,14 @@ export default function Dashboard() {
                       {form.message.trim() || 'Pesan ucapanmu akan muncul di sini...'}
                     </p>
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                    <span>{REVEAL_STYLES.find((s) => s.id === form.reveal_style)?.emoji}</span>
-                    <span>{REVEAL_STYLES.find((s) => s.id === form.reveal_style)?.label}</span>
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs" style={{ color: activeBgTheme.hintColor }}>
+                    <span className="bg-white/70 px-2 py-0.5 rounded-full">
+                      {REVEAL_STYLES.find((s) => s.id === form.reveal_style)?.emoji}{' '}
+                      {REVEAL_STYLES.find((s) => s.id === form.reveal_style)?.label}
+                    </span>
+                    {form.music_url.trim() && (
+                      <span className="bg-white/70 px-2 py-0.5 rounded-full">🎵 Musik aktif</span>
+                    )}
                   </div>
                   {form.event_date && (
                     <div className="mt-2 inline-flex items-center gap-1 text-xs bg-white/80 px-2.5 py-1 rounded-full text-gray-500">
@@ -408,6 +521,12 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-400 mt-0.5 font-mono truncate">{link.slug}</p>
                   </div>
                   <div className="flex gap-2 shrink-0 flex-wrap">
+                    <button
+                      onClick={() => handleEdit(link)}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition"
+                    >
+                      ✏️ Edit
+                    </button>
                     <button
                       onClick={() => copyLink(link.slug)}
                       className="text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
