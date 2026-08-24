@@ -1,9 +1,16 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PhotoContext } from '../../App'
 import { useCamera } from '../../hooks/useCamera'
 import { captureVideoFrame } from '../../utils/camera'
 import { CAMERA_FILTERS, DEFAULT_FILTER_ID } from '../../data/cameraFilters'
+
+const TIMER_OPTIONS = [
+  { value: 0, label: 'Off' },
+  { value: 3, label: '3s' },
+  { value: 5, label: '5s' },
+  { value: 10, label: '10s' },
+]
 
 export default function Capture() {
   const { slug } = useParams()
@@ -15,6 +22,9 @@ export default function Capture() {
   const [pendingShot, setPendingShot] = useState(null)
   const [flash, setFlash] = useState(false)
   const [filterId, setFilterId] = useState(DEFAULT_FILTER_ID)
+  const [timerSeconds, setTimerSeconds] = useState(0) // 0 = timer mati
+  const [countdown, setCountdown] = useState(null) // null = tidak sedang hitung mundur
+  const doCaptureRef = useRef(null)
 
   const activeFilter = CAMERA_FILTERS.find((f) => f.id === filterId) || CAMERA_FILTERS[0]
 
@@ -26,12 +36,7 @@ export default function Capture() {
     }
   }, [selectedFrame, slug, navigate])
 
-  if (!selectedFrame) return null
-
-  const totalShots = selectedFrame.shotCount
-  const currentNumber = Math.min(shots.length + 1, totalShots)
-
-  const handleCapture = () => {
+  const doCapture = () => {
     if (!videoRef.current) return
     setFlash(true)
     setTimeout(() => setFlash(false), 300)
@@ -41,6 +46,37 @@ export default function Capture() {
     const dataUrl = captureVideoFrame(videoRef.current, facingMode === 'user', activeFilter.css)
     setPendingShot(dataUrl)
   }
+  // Simpan versi terbaru doCapture di ref, biar dipanggil dari dalam
+  // useEffect hitung mundur tanpa masalah stale-closure
+  doCaptureRef.current = doCapture
+
+  // ---- Logika hitung mundur timer ----
+  useEffect(() => {
+    if (countdown === null) return
+    if (countdown <= 0) {
+      setCountdown(null)
+      doCaptureRef.current?.()
+      return
+    }
+    const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000)
+    return () => clearTimeout(t)
+  }, [countdown])
+
+  if (!selectedFrame) return null
+
+  const totalShots = selectedFrame.shotCount
+  const currentNumber = Math.min(shots.length + 1, totalShots)
+  const isCountingDown = countdown !== null
+
+  const handleShutterClick = () => {
+    if (timerSeconds === 0) {
+      doCapture()
+    } else {
+      setCountdown(timerSeconds)
+    }
+  }
+
+  const cancelCountdown = () => setCountdown(null)
 
   const confirmShot = () => {
     const next = [...shots, pendingShot]
@@ -90,12 +126,12 @@ export default function Capture() {
         />
 
         {/* Tombol ganti kamera depan/belakang */}
-        {cameraState === 'active' && !pendingShot && (
+        {cameraState === 'active' && !pendingShot && !isCountingDown && (
           <button
             onClick={switchCamera}
             disabled={switching}
             aria-label="Ganti kamera"
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition disabled:opacity-50"
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition disabled:opacity-50 z-10"
           >
             {switching ? (
               <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
@@ -108,6 +144,19 @@ export default function Capture() {
               </svg>
             )}
           </button>
+        )}
+
+        {/* Overlay angka hitung mundur */}
+        {isCountingDown && countdown > 0 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
+            <span
+              key={countdown}
+              className="text-white font-bold drop-shadow-lg"
+              style={{ fontSize: '5.5rem', animation: 'countdown-pop 1s ease-out' }}
+            >
+              {countdown}
+            </span>
+          </div>
         )}
 
         {pendingShot && (
@@ -157,9 +206,31 @@ export default function Capture() {
         )}
       </div>
 
-      {/* Pemilih filter — hanya tampil saat kamera aktif & belum ada pending shot */}
-      {cameraState === 'active' && !pendingShot && (
+      {/* Pemilih timer — hanya tampil saat kamera aktif & belum ada pending shot */}
+      {cameraState === 'active' && !pendingShot && !isCountingDown && (
         <div className="w-full max-w-sm mt-4">
+          <p className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">⏱ Timer</p>
+          <div className="flex gap-2">
+            {TIMER_OPTIONS.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setTimerSeconds(t.value)}
+                className={`flex-1 py-2 rounded-xl text-xs font-medium transition ${
+                  timerSeconds === t.value
+                    ? 'bg-pink-500 text-white shadow'
+                    : 'bg-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pemilih filter — hanya tampil saat kamera aktif & belum ada pending shot */}
+      {cameraState === 'active' && !pendingShot && !isCountingDown && (
+        <div className="w-full max-w-sm mt-3">
           <div className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1">
             {CAMERA_FILTERS.map((f) => (
               <button
@@ -194,14 +265,25 @@ export default function Capture() {
       )}
 
       <div className="mt-6 w-full max-w-sm">
-        {!pendingShot && cameraState === 'active' && (
+        {!pendingShot && !isCountingDown && cameraState === 'active' && (
           <div className="flex justify-center">
             <button
-              onClick={handleCapture}
+              onClick={handleShutterClick}
               className="w-16 h-16 rounded-full bg-pink-500 hover:bg-pink-600 active:scale-95 transition shadow-lg ring-4 ring-pink-200 flex items-center justify-center"
               aria-label="Ambil foto"
             >
               <span className="w-11 h-11 rounded-full bg-white" />
+            </button>
+          </div>
+        )}
+
+        {isCountingDown && (
+          <div className="flex justify-center">
+            <button
+              onClick={cancelCountdown}
+              className="text-sm font-medium text-gray-500 underline underline-offset-4"
+            >
+              Batal
             </button>
           </div>
         )}
@@ -223,6 +305,14 @@ export default function Capture() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes countdown-pop {
+          0% { transform: scale(1.7); opacity: 0; }
+          25% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(0.85); opacity: 0.2; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,8 +1,8 @@
 /**
  * Mengambil snapshot mentah dari elemen <video> yang sedang aktif,
  * lalu mengembalikannya sebagai dataURL. Otomatis mem-flip horizontal
- * kalau video sedang di-mirror (mode selfie), supaya hasil foto tidak
- * terbalik seperti cermin (sama seperti kamera HP pada umumnya).
+ * kalau video sedang di-mirror (mode selfie kamera depan), supaya hasil
+ * foto tidak terbalik seperti cermin. Kamera belakang tidak di-mirror.
  *
  * @param {HTMLVideoElement} videoEl
  * @param {boolean} mirrored
