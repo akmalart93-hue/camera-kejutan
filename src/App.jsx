@@ -9,6 +9,7 @@ import Result from './pages/public/Result'
 import Wishes from './pages/public/Wishes'
 import Login from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
+import Photos from './pages/admin/Photos'
 import AdminRoute from './components/AdminRoute'
 
 // Context untuk "menitipkan" frame yang dipilih & foto-foto yang
@@ -55,6 +56,15 @@ export default function App() {
             element={
               <AdminRoute>
                 <Dashboard />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/photos"
+            element={
+              <AdminRoute>
+                <Photos />
               </AdminRoute>
             }
           />

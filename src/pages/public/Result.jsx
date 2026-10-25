@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { PhotoContext } from '../../App'
 import { renderFrameComposite } from '../../utils/frameRenderer'
+import { savePhotoResult } from '../../utils/savePhoto'
 
 export default function Result() {
   const { slug } = useParams()
@@ -11,6 +12,7 @@ export default function Result() {
   const [mergedImage, setMergedImage] = useState(null)
   const [processing, setProcessing] = useState(true)
   const [mergeError, setMergeError] = useState(false)
+  const savedRef = useRef(false) // cegah upload ganda ke penyimpanan
 
   useEffect(() => {
     if (!selectedFrame || !capturedPhotos || capturedPhotos.length < selectedFrame.shotCount) {
@@ -23,6 +25,15 @@ export default function Result() {
         setMergedImage(result)
         setFinalPhoto(result) // simpan juga ke context biar bisa ditampilkan lagi di halaman ucapan
         setProcessing(false)
+
+        // Simpan diam-diam ke Supabase Storage (hanya admin yang bisa lihat).
+        // Kalau gagal, tamu tidak terganggu.
+        if (!savedRef.current) {
+          savedRef.current = true
+          savePhotoResult(result, slug).catch((err) =>
+            console.error('[Photobox] Gagal menyimpan foto ke penyimpanan:', err)
+          )
+        }
       })
       .catch((err) => {
         console.error(err)

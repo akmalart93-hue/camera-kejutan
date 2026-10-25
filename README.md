@@ -254,6 +254,15 @@ Lalu di GitHub: **Settings** → **Pages** → **Source**, pilih branch
 Setiap link punya ID unik (slug), jadi kamu bisa membuat link baru untuk
 setiap acara/orang tanpa perlu mengubah kode sama sekali.
 
+### 📦 Menyimpan hasil foto tamu (hanya admin yang bisa lihat)
+
+Setiap foto gabungan yang jadi di halaman hasil otomatis tersimpan di
+Supabase Storage (bucket private `photobox-results`, gratis 1 GB).
+
+1. Buka **SQL Editor** di Supabase, jalankan isi `supabase/photo_results_setup.sql` (sekali saja).
+2. Login admin → klik **📷 Hasil Foto** di Dashboard (atau buka `/#/admin/photos`).
+3. Di sana kamu bisa melihat, mengunduh, dan menghapus foto. Tamu tidak bisa membuka foto siapa pun.
+
 ---
 
 ## 10. Semua Fitur, Dijelaskan Satu-satu

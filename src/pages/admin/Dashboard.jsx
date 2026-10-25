@@ -250,12 +250,20 @@ export default function Dashboard() {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-lg font-bold text-gray-800">🎉 Admin Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-red-500 hover:text-red-700 font-medium"
-          >
-            Keluar
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/admin/photos')}
+              className="text-sm text-pink-500 hover:text-pink-700 font-medium"
+            >
+              📷 Hasil Foto
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-red-500 hover:text-red-700 font-medium"
+            >
+              Keluar
+            </button>
+          </div>
         </div>
       </header>
 
